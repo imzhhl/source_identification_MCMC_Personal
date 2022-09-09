@@ -72,7 +72,12 @@ def uniform_proposal_distribution(t, delta_D = 1, delta_k = 0.01):
         
     return (D_new, k_new)
 
-# %%数据声明    
+# %%关键参数设定及变量声明   
+
+T = 50000    # MCMC迭代总步数
+sigma = 0.05 #似然函数的标准差
+is_normal_proposal = True  #选择建议分布为正态分布还是均匀分布(True or False)
+ 
 # 监测点值
 c_1_ = 0.96
 c_2_ = 0.91
@@ -81,9 +86,6 @@ c_4_ = 0.67
 
 D_real_value = 2.0   # D-真值
 k_real_value = 0.015 # k-真值
-        
-T = 50000   # MCMC迭代总步数
-sigma = 0.05 #似然函数的标准差
 
 t = 0      # 循环迭代索引
 count = 0  # 用于计算接受率标识
@@ -98,18 +100,19 @@ start = time.perf_counter()
 
 while t < T-1:
     t = t + 1 
-
-    # 建议分布采用正态分布
-    sigma_D = 1    # 设置标准差
-    sigma_k = 0.01 # 设置标准差
-    D_new = normal_proposal_distribution(t, sigma_D, sigma_k)[0]
-    k_new = normal_proposal_distribution(t, sigma_D, sigma_k)[1]
-
-    # 建议分布采用均匀分布    
-    # delta_D = 1
-    # delta_k = 0.01
-    # D_new = uniform_proposal_distribution(t, delta_D, delta_k)[0]
-    # k_new = uniform_proposal_distribution(t, delta_D, delta_k)[1]
+    
+    if is_normal_proposal:
+        # 建议分布采用正态分布
+        sigma_D = 1    # 设置标准差
+        sigma_k = 0.01 # 设置标准差
+        D_new = normal_proposal_distribution(t, sigma_D, sigma_k)[0]
+        k_new = normal_proposal_distribution(t, sigma_D, sigma_k)[1]
+    else:
+        # 建议分布采用均匀分布    
+        delta_D = 1
+        delta_k = 0.01
+        D_new = uniform_proposal_distribution(t, delta_D, delta_k)[0]
+        k_new = uniform_proposal_distribution(t, delta_D, delta_k)[1]
     
     c_1_new = function(D = D_new,  k = k_new, loc = 3)
     c_2_new = function(D = D_new,  k = k_new, loc = 6)
