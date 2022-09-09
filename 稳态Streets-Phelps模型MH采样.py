@@ -61,14 +61,14 @@ def normal_proposal_distribution(t, sigma_D = 0.1, sigma_k = 0.01):
       
 # 用于计算均匀建议分布值  
 def uniform_proposal_distribution(t, delta_D = 1, delta_k = 0.01):
-    D_new = random.uniform(D[t] - delta_D, D[t] + delta_D)   #建议分布
-    k_new = random.uniform(k[t] - delta_k, k[t] + delta_k)     #建议分布
+    D_new = random.uniform(D[t - 1] - delta_D, D[t - 1] + delta_D)   #建议分布
+    k_new = random.uniform(k[t - 1] - delta_k, k[t - 1] + delta_k)     #建议分布
     
     while D_new < 0 or D_new > 10:
-        D_new = random.uniform(D[t] - delta_D, D[t] + delta_D)
+        D_new = random.uniform(D[t - 1] - delta_D, D[t - 1] + delta_D)
     
     while k_new < 0 or k_new > 0.1:
-        k_new = random.uniform(k[t] - delta_k, k[t] + delta_k)
+        k_new = random.uniform(k[t - 1] - delta_k, k[t - 1] + delta_k)
         
     return (D_new, k_new)
 
