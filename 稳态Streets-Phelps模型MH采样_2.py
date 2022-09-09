@@ -1,4 +1,5 @@
 # %%
+# 升级版，速度提升8倍（主要是函数的调用次数减少很多）
 # python库导入
 import time
 import random
