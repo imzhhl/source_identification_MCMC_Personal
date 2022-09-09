@@ -14,7 +14,7 @@ matplotlib.rc("font", family='Microsoft YaHei')
 # 函数定义
 
 # 用于计算稳态Streets-Phelps模型
-def function(D = 2, k = 0.015, loc = 0):
+def function(D_current = 2, k_current = 0.015, loc = 0):
     u = 1
     c_0 = 1
     L = 15
@@ -22,7 +22,7 @@ def function(D = 2, k = 0.015, loc = 0):
     def func(x,c):
         # 计算 dc0/dx, dc1/dx 的值
         dc0 = c[1]  # 计算 dh0/dx
-        dc1 = (k * c[0] + u * c[1]) / D # 计算 dc1/dx
+        dc1 = (k_current * c[0] + u * c[1]) / D_current # 计算 dc1/dx
         return np.vstack((dc0, dc1))
        
     def bc(ca,cb):
@@ -114,15 +114,15 @@ while t < T-1:
         D_new = uniform_proposal_distribution(t, delta_D, delta_k)[0]
         k_new = uniform_proposal_distribution(t, delta_D, delta_k)[1]
     
-    c_1_new = function(D = D_new,  k = k_new, loc = 3)
-    c_2_new = function(D = D_new,  k = k_new, loc = 6)
-    c_3_new = function(D = D_new,  k = k_new, loc = 9)
-    c_4_new = function(D = D_new,  k = k_new, loc = 12)
+    c_1_new = function(D_current = D_new,  k_current = k_new, loc = 3)
+    c_2_new = function(D_current = D_new,  k_current = k_new, loc = 6)
+    c_3_new = function(D_current = D_new,  k_current = k_new, loc = 9)
+    c_4_new = function(D_current = D_new,  k_current = k_new, loc = 12)
      
-    c_1_now = function(D = D[t-1], k = k[t-1], loc = 3)
-    c_2_now = function(D = D[t-1], k = k[t-1], loc = 6)
-    c_3_now = function(D = D[t-1], k = k[t-1], loc = 9)
-    c_4_now = function(D = D[t-1], k = k[t-1], loc = 12)
+    c_1_now = function(D_current = D[t-1], k_current = k[t-1], loc = 3)
+    c_2_now = function(D_current = D[t-1], k_current = k[t-1], loc = 6)
+    c_3_now = function(D_current = D[t-1], k_current = k[t-1], loc = 9)
+    c_4_now = function(D_current = D[t-1], k_current = k[t-1], loc = 12)
     
     likehood_j = np.exp(-(c_1_new - c_1_)**2/(2*sigma**2) - (c_2_new - c_2_)**2/(2*sigma**2) - (c_3_new - c_3_)**2/(2*sigma**2) - (c_4_new - c_4_)**2/(2*sigma**2))
     likehood_i = np.exp(-(c_1_now - c_1_)**2/(2*sigma**2) - (c_2_now - c_2_)**2/(2*sigma**2) - (c_3_now - c_3_)**2/(2*sigma**2) - (c_4_now - c_4_)**2/(2*sigma**2))
