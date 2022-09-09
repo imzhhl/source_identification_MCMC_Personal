@@ -92,12 +92,15 @@ c_4_ = 0.67
 D_real_value = 2.0   # D-真值
 k_real_value = 0.015 # k-真值
 
-t = 0      # 循环迭代索引
-count = 0  # 用于计算接受率标识
+t = 0       # 循环迭代索引
+count = 0   # 用于计算接受率标识
 flag = True # 用于记录是否接受了新值
 
-D = [5 for i in range(T)]    # D初始点(需在先验范围内)及迭代历史记录
-k = [0.01 for i in range(T)] # k初始点(需在先验范围内)及迭代历史记录
+D_init = 5    # D初始点(需在先验范围内)
+k_init = 0.01 # k初始点(需在先验范围内)
+
+D = [0 for i in range(T)] # 迭代历史记录
+k = [0 for i in range(T)] # 迭代历史记录
 
 #%%
 
@@ -127,7 +130,7 @@ while t < T-1:
     c_4_new = c_new[3]
     
     if t == 1:
-        c_now   = function(D_current = D[t-1],  k_current = k[t-1], loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
+        c_now   = function(D_current = D_init,  k_current = k_init, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
         c_1_now = c_now[0]
         c_2_now = c_now[1]
         c_3_now = c_now[2]
