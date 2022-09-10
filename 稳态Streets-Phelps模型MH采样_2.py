@@ -77,6 +77,13 @@ def uniform_proposal_distribution(t, delta_D = 1, delta_k = 0.01):
         
     return (D_new, k_new)
 
+# 用于计算似然函数
+def likelihood_func(sigma, c, c_monitor):
+    temp = 0
+    for i in range(len(c)):   
+        temp = temp + (-(c[i] - c_monitor[i])**2/(2*sigma**2))
+    return (np.exp(temp))
+
 # %%关键参数设定及变量声明   
 
 T = 50000    # MCMC迭代总步数
@@ -84,10 +91,11 @@ sigma = 0.05 #似然函数的标准差
 is_normal_proposal = True  #选择建议分布为正态分布还是均匀分布(True or False)
  
 # 监测点值
-c_1_ = 0.96
-c_2_ = 0.91
-c_3_ = 0.84
-c_4_ = 0.67
+c_1_monitor = 0.96
+c_2_monitor = 0.91
+c_3_monitor = 0.84
+c_4_monitor = 0.67
+c_monitor   = [c_1_monitor, c_2_monitor, c_3_monitor, c_4_monitor]
 
 D_real_value = 2.0   # D-真值
 k_real_value = 0.015 # k-真值
@@ -123,22 +131,14 @@ while t < T-1:
         D_new = uniform_proposal_distribution(t, delta_D, delta_k)[0]
         k_new = uniform_proposal_distribution(t, delta_D, delta_k)[1]
     
-    c_new   = function(D_current = D_new,  k_current = k_new, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
-    c_1_new = c_new[0]
-    c_2_new = c_new[1]
-    c_3_new = c_new[2]
-    c_4_new = c_new[3]
+    c_new = function(D_current = D_new,  k_current = k_new, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
     
     if t == 1:
-        c_now   = function(D_current = D_init,  k_current = k_init, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
-        c_1_now = c_now[0]
-        c_2_now = c_now[1]
-        c_3_now = c_now[2]
-        c_4_now = c_now[3]
-    
-    likehood_j = np.exp(-(c_1_new - c_1_)**2/(2*sigma**2) - (c_2_new - c_2_)**2/(2*sigma**2) - (c_3_new - c_3_)**2/(2*sigma**2) - (c_4_new - c_4_)**2/(2*sigma**2))
-    likehood_i = np.exp(-(c_1_now - c_1_)**2/(2*sigma**2) - (c_2_now - c_2_)**2/(2*sigma**2) - (c_3_now - c_3_)**2/(2*sigma**2) - (c_4_now - c_4_)**2/(2*sigma**2))
-    alpha = min(1, likehood_j / likehood_i)
+        c_now = function(D_current = D_init,  k_current = k_init, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
+
+    likelihood_j = likelihood_func(sigma, c_new, c_monitor)
+    likelihood_i = likelihood_func(sigma, c_now, c_monitor)
+    alpha = min(1, likelihood_j / likelihood_i)
     
     u = random.uniform(0, 1)
     if u < alpha:    # accept
@@ -151,12 +151,9 @@ while t < T-1:
         k[t]  = k[t - 1]
         flag  = False
         
-    # 接收后将新数据存入旧数据
+    # 接受后将新数据存入旧数据
     if flag == True:
-        c_1_now = c_1_new
-        c_2_now = c_2_new
-        c_3_now = c_3_new
-        c_4_now = c_4_new
+        c_now = c_new
     
     print(f"current i = {t}/{T}")
     print(f"当前接受率 = {round((count/t), 2)*100}%")
