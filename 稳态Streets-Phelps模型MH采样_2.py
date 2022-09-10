@@ -160,7 +160,7 @@ while t < T-1:
 
 ######## 迭代结束 ##########    
 end = time.perf_counter()
-print(f"最终接受率 = {(count/T)*100}%")
+print(f"最终接受率 = {round((count/T)*100, 2)}%")
 print("运行时间为", round(((end-start)/60), 2), 'mins')
 # %%
 # 绘图后处理
