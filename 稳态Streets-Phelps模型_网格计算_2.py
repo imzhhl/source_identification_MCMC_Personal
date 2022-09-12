@@ -4,7 +4,7 @@ Created on Mon Sep 12 22:31:33 2022
 
 @author: zhhl_
 """
-# 相比上一版本封装了更多的函数，提高通用性
+# 与上一版相比，使用了更多循环数组，使用了似然函数的封装，并且是为了测试fluent的数据做的预计算
 
 from scipy.integrate import solve_bvp
 import numpy as np
@@ -70,15 +70,11 @@ c_ture = [0.96, 0.91, 0.84, 0.67]
 c_predict = np.zeros([4,101,101])
 
 
-
 for i in range(0, 101, 1):
     for j in range(0, 101, 1):
-        value = function(D = D[i,j], k = k[i,j])
-        c_predict[0,i,j] = value[0]
-        c_predict[1,i,j] = value[1]
-        c_predict[2,i,j] = value[2]
-        c_predict[3,i,j] = value[3]
-        
+        value = function(D = D[i,j], k = k[i,j])        
+        for z in range(0, 4, 1):
+            c_predict[z,i,j] = value[z]        
 
 sigma = likelihood_func(0.01, c_predict, c_ture)
 
