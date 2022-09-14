@@ -118,7 +118,7 @@ k = [0 for i in range(T)] # 迭代历史记录
 start = time.perf_counter() 
 
 # while t < T-1: 
-for t in tqdm(range(T-1)): 
+for t in tqdm(range(T)): 
     t = t + 1 
     if is_normal_proposal:
         # 建议分布采用正态分布
