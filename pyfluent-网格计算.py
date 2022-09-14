@@ -6,6 +6,7 @@ log: 1. 2022-09-04 attempt to couple with pyfluent
      2. 2022-09-09 fix code adapted to MH method
      3. 2022-09-12 function encapsulation 
      4. 2022-09-13 fix code adapted to mesh method   
+     5. 2022-09-14 fineshed and successful
      ______  _    _   _    _   _      
     |___  / | |  | | | |  | | | |     
        / /  | |__| | | |__| | | |     
