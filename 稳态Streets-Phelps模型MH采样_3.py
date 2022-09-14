@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 14 21:31:47 2022
+
+@author: zhhl_
+"""
+
 # %%
 # 升级版，速度提升8倍（主要是function函数的调用次数减少很多）
 # 修改函数和进度条
@@ -17,7 +24,7 @@ matplotlib.rc("font", family='Microsoft YaHei')
 # 函数定义
 
 # 用于计算稳态Streets-Phelps模型
-def function(D_current = 2, k_current = 0.015, loc_1 = 0, loc_2 = 0, loc_3 = 0, loc_4 = 0):
+def function(D_current = 2, k_current = 0.015, loc = []):
     u = 1
     c_0 = 1
     L = 15
@@ -46,10 +53,10 @@ def function(D_current = 2, k_current = 0.015, loc_1 = 0, loc_2 = 0, loc_3 = 0, 
     
     xSol = np.linspace(xa, xb, 151)  # 输出的网格节点
     cSol = res.sol(xSol)[0]  # 网格节点处的 h 值
-    loc_1_value = np.array(list(zip(xSol,cSol)))[loc_1*10, 1]
-    loc_2_value = np.array(list(zip(xSol,cSol)))[loc_2*10, 1]
-    loc_3_value = np.array(list(zip(xSol,cSol)))[loc_3*10, 1]
-    loc_4_value = np.array(list(zip(xSol,cSol)))[loc_4*10, 1]
+    loc_1_value = np.array(list(zip(xSol,cSol)))[loc[0]*10, 1]
+    loc_2_value = np.array(list(zip(xSol,cSol)))[loc[1]*10, 1]
+    loc_3_value = np.array(list(zip(xSol,cSol)))[loc[2]*10, 1]
+    loc_4_value = np.array(list(zip(xSol,cSol)))[loc[3]*10, 1]
     
     return (loc_1_value, loc_2_value, loc_3_value, loc_4_value)
 
@@ -99,6 +106,13 @@ c_3_monitor = 0.84
 c_4_monitor = 0.67
 c_monitor   = [c_1_monitor, c_2_monitor, c_3_monitor, c_4_monitor]
 
+loc_1 = 3
+loc_2 = 6
+loc_3 = 9
+loc_4 = 12
+location = [loc_1, loc_2, loc_3, loc_4]
+
+
 D_real_value = 2.0   # D-真值
 k_real_value = 0.015 # k-真值
 
@@ -118,7 +132,7 @@ k = [0 for i in range(T)] # 迭代历史记录
 start = time.perf_counter() 
 
 # while t < T-1: 
-for t in tqdm(range(T)): 
+for t in tqdm(range(T-1)): 
     t = t + 1 
     if is_normal_proposal:
         # 建议分布采用正态分布
@@ -133,10 +147,10 @@ for t in tqdm(range(T)):
         D_new = uniform_proposal_distribution(t, delta_D, delta_k, D, k)[0]
         k_new = uniform_proposal_distribution(t, delta_D, delta_k, D, k)[1]
     
-    c_new = function(D_current = D_new,  k_current = k_new, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
+    c_new = function(D_current = D_new,  k_current = k_new, loc = location)
     
     if t == 1:
-        c_now = function(D_current = D_init,  k_current = k_init, loc_1 = 3, loc_2 = 6, loc_3 = 9, loc_4 = 12 )
+        c_now = function(D_current = D_init,  k_current = k_init, loc = location)
 
     likelihood_j = likelihood_func(sigma, c_new, c_monitor)
     likelihood_i = likelihood_func(sigma, c_now, c_monitor)
