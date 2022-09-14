@@ -196,7 +196,7 @@ root.file.read(file_type="data", file_name=import_filename)
 # 首先加载污染源UDF
 # 不能在此进行编译，因UDF采用C++，所以需要进行外部边界，在此只进行加载
 # tui.define.user_defined.compiled_functions('compile', 'libudf', 'yes', 'udf_source.cpp')
-tui.define.use_defined.compiled_functions('load' , 'libudf_socket')
+tui.define.user_defined.compiled_functions('load' , 'libudf_socket')
 
 # 设定真实污染源的位置 
 X_true = 500.0
