@@ -1,5 +1,6 @@
 # %%
 # 升级版，速度提升8倍（主要是function函数的调用次数减少很多）
+# 修改函数和进度条
 # python库导入
 import time
 import random
