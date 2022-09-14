@@ -198,8 +198,8 @@ root.file.read(file_type="data", file_name=import_filename)
 tui.define.use_defined.compiled_functions('load' , 'libudf_socket')
 
 # 设定真实污染源的位置 
-X_true = 400.0
-Y_true = -150.0
+X_true = 500.0
+Y_true = 120.0
 
 # 设定监测点的坐标
 points_list = [[200,150],
@@ -232,8 +232,7 @@ X = np.linspace(50, 950, 91)
 Y = np.linspace(-200, 200, 41)
 X, Y = np.meshgrid(X, Y)
 
-# 定义真实值和预测值
-c_true = point_true_value
+# 定义预测值
 c_predict = np.zeros([9,41,91])
 
 ################################### 迭代开始 ###################################
@@ -248,12 +247,18 @@ end = time.perf_counter()
 print("运行时间为", round(((end-start)/60), 2), 'mins')           
 ################################### 迭代结束 ###################################   
 
-# 计算似然函数
-sigma = likelihood_func(0.01, c_predict, c_true)
+# %%计算似然函数
+sigma = likelihood_func(0.01, c_predict, point_true_value)
 
-#%% 显示三维后验密度图
+#%% 显示图
 
-# 创建图
+# 污染物扩散二维等值线图
+matplotlib.pyplot.contour(X, Y, c_predict[4,:,:], colors=list(["purple","blue","cyan", "green","yellow","orange","red"]), levels = [0.02, 0.05, 0.1, 0.2, 0.3, 0.4], linestyles=['-'])
+
+# 二维后验密度图
+matplotlib.pyplot.contour(X, Y, sigma, colors=list(["purple","blue","cyan", "green","yellow","orange","red"]), levels = 7, linestyles=['-'])
+
+# 三维后验密度图
 fig = plt.figure(figsize=(12,6))
 # 转换为三维
 ax = Axes3D(fig)
@@ -276,7 +281,7 @@ ax.set_zlabel( 'Post-PDF',font )
 
 # 设置标题
 plt.title("A figure of 3D")
-fig.colorbar(surf, shrink=0.5, aspect=5)
+# fig.colorbar(surf, shrink=0.5, aspect=5)
 plt.tight_layout()
 plt.show()
 
