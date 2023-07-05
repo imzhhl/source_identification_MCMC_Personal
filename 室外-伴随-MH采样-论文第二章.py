@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sun Jun 25 22:55:09 2023
+
+@author: zhhl_
+"""
+
+# -*- coding: utf-8 -*-
+"""
 author： Hongliang Zhang - WHU
 date：   2022-09-26
 log: 1. 2022-10-05 伴随方法用于室内污染物寻源
@@ -18,9 +25,9 @@ import random
 import time
 import re
 import os
-from scipy.stats import gaussian_kde
 from decimal import Decimal
 from tqdm import tqdm
+from scipy.stats import gaussian_kde
 import arviz as az
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -48,27 +55,17 @@ matplotlib.rc("font", family='Microsoft YaHei')
 def normal_proposal_distribution(t, trunc_X = [0, 1], trunc_Y = [0, 1], trunc_S = [0, 1], sigma_X = 0., sigma_Y = 0., sigma_S = 0., X_history = [], Y_history = [], S_history = []):
     # 设置截断
     x_lower = trunc_X[0]; x_upper = trunc_X[1] 
-    y_lower = trunc_Y[0]; y_upper = trunc_Y[1]
-    s_lower = trunc_S[0]; s_upper = trunc_S[1]
-    
     # 截断正态分布采样
     X_new = stats.truncnorm.rvs((x_lower - X_history[t - 1]) / sigma_X, (x_upper - X_history[t - 1]) / sigma_X, loc=X_history[t - 1], scale=sigma_X) #建议分布
-   
+    # 设置截断
+    y_lower = trunc_Y[0]; y_upper = trunc_Y[1]
     # 截断正态分布采样
     Y_new = stats.truncnorm.rvs((y_lower - Y_history[t - 1]) / sigma_Y, (y_upper - Y_history[t - 1]) / sigma_Y, loc=Y_history[t - 1], scale=sigma_Y) #建议分布
-   
+    # 设置截断 
+    s_lower = trunc_S[0]; s_upper = trunc_S[1] 
     # 截断正态分布采样
     S_new = stats.truncnorm.rvs((s_lower - S_history[t - 1]) / sigma_S, (s_upper - S_history[t - 1]) / sigma_S, loc=S_history[t - 1], scale=sigma_S) #建议分布
-    
-    while UALP_result(X_new, Y_new) == 0:
-        # 截断正态分布采样
-        X_new = stats.truncnorm.rvs((x_lower - X_history[t - 1]) / sigma_X, (x_upper - X_history[t - 1]) / sigma_X, loc=X_history[t - 1], scale=sigma_X) #建议分布
        
-        # 截断正态分布采样
-        Y_new = stats.truncnorm.rvs((y_lower - Y_history[t - 1]) / sigma_Y, (y_upper - Y_history[t - 1]) / sigma_Y, loc=Y_history[t - 1], scale=sigma_Y) #建议分布
-       
-        # 截断正态分布采样
-        S_new = stats.truncnorm.rvs((s_lower - S_history[t - 1]) / sigma_S, (s_upper - S_history[t - 1]) / sigma_S, loc=S_history[t - 1], scale=sigma_S) #建议分布     
     
     # 设置采样值保留的小数位数 
     X_new = Decimal(X_new).quantize(Decimal("0.000"))
@@ -224,66 +221,6 @@ def direct_file_to_array(source_list):
     # 保存到文件中，下次使用是直接读取文件，避免重复上述过程(太慢！)
     np.save('uds_direct.npy', uds_t)
     
-def UALP_area():
-    # 保存x坐标, 和y坐标的列表
-    x=[]; y=[]
-
-    # 创建1个二维空数组
-    uds = [[] for i in range(1)]
-
-    # 创建一维列表，用于存储二维np数组，进而转化为三维np数组
-    uds_t = []
-
-    # 读取csv文件，当然也可以读取类似txt之类的文件
-    with open(r'F:\ZHHL\TE_Doctor\研究内容\SCI论文\5-动态风场下利用概率伴随方法进行室外污染物的溯源\MCMC采样\UALP','r')  as  csvfile:   
-        #指定分隔符为","，因为我们刚才导出时就是逗号
-        plots=csv.reader(csvfile,delimiter=',')
-        #循环读取文件各列
-        for row in plots:
-            #为了跳过文件前面的非数据行  
-            if plots.line_num == 1:
-                continue
-            # 读取x和y坐标
-            x.append(float(row[1]))
-            y.append(float(row[2]))
-            # 读取udm_11的场值到二维数组uds中
-            for i in range(1):
-                uds[i].append(float(row[i+3]))
-
-    # 将一维列表(元素为一维数组)转化为二维数组             
-    uds = np.array(uds)
-    
-    # # 设置Pt的截断值（阈值）
-    for i in range(1):
-        for j in range(len(y)):
-            if uds[i][j] < 1e-18:
-                uds[i][j] =0.
-
-    # 确定meshgrid的坐标范围，并离散坐标
-    xi=np.linspace(min(x),max(x), 5000)
-    yi=np.linspace(min(y),max(y), 5000)
-     
-    # grid_x,grid_y坐标必须维数一致，且为二维
-    grid_x, grid_y = np.meshgrid(xi, yi)
-     
-    # 对x，y位置的浓度值进行插值，插值的方法有'cubic', 'linear', 'nearest'
-    # 注意传入的坐标参数需要以元组的形式成对传入
-    # 当然matplotlib也自带griddata插值函数，该函数每个坐标是一个参数
-    # 但matplotlib自带的griddata插值函数只能使用默认的linear插值
-
-    # griddata插值，并存入uds_t列表中，列表中的元素为二维数组
-    for i in range(1):
-        uds_t.append(griddata((x,y), uds[i], (grid_x,grid_y), method='nearest', fill_value = np.nan, rescale = False))
-
-    # 将uds_t转换为三维np数组
-    uds_t = np.array(uds_t)
-    uds_t = uds_t[0,:,:]
-    # 保存到文件中，下次使用是直接读取文件，避免重复上述过程(太慢！)
-    np.save('uds_UALP.npy', uds_t)
-    
-    plt.contour(grid_x, grid_y, uds_t)
-    
-    
 # 用于计算伴随浓度场在预测点(X_current, Y_current)处的浓度值
 def adjoint_results_1(source_list, sensor_list):
     # 保存源处的伴随浓度值
@@ -305,10 +242,6 @@ def adjoint_results(X_current, Y_current, S_current, sensor_list):
     # 返回存储各监测点浓度值的列表
     return data_predict_new
 
-# 用于计算在建议点处的UALP
-def UALP_result(X_current, Y_current):
-    return uds_UALP[int(5*Y_current)][int(5*X_current)]
-    
 # 用于提取uds_7在监测点处的浓度值(真实值)
 def direct_results(sensor_list):  
     # 保存监测点处的真实浓度值
@@ -327,36 +260,34 @@ S_true = 3.43
 
 source_list = [[651, 322]]
 # 设定监测点的坐标
-sensor_list = [[302.95, 656.38],
-               [438.89, 719.76],
-               [346.74, 621.62],
-               [392.05, 642.75],
-               [437.37, 663.88],
-               [390.52, 586.84],
-               [435.84, 608.00],
-               [481.15, 629.13],
-               [434.31, 552.12],
-               [479.63, 573.25],
-               [478.10, 517.37],
-               [523.42, 538.50],
-               [521.89, 482.62],
-               [520.36, 426.74],
-               [565.68, 447.87],
-               [564.15, 391.99],
-               [609.47, 413.12],
-               [607.94, 357.24]]
+sensor_list =  [[302.95, 656.38],
+                [438.89, 719.76],
+                [346.74, 621.62],
+                [392.05, 642.75],
+                [437.37, 663.88],
+                [390.52, 586.84],
+                [435.84, 608.00],
+                [481.15, 629.13],
+                [434.31, 552.12],
+                [479.63, 573.25],
+                [478.10, 517.37],
+                [523.42, 538.50],
+                [521.89, 482.62],
+                [520.36, 426.74],
+                [565.68, 447.87],
+                [564.15, 391.99],
+                [609.47, 413.12],
+                [607.94, 357.24]]
 
 
 # adjoint_file_to_array(sensor_list)
 # direct_file_to_array(source_list)
-# UALP_area()
+
 
 # 从文件中导入uds_adjoint数组，并反转y轴
 uds_adjoint = []; uds_adjoint = np.load('uds_adjoint.npy', uds_adjoint); #uds_adjoint = np.flip(uds_adjoint, 1)
 # 从文件中导入uds_direct数组，并反转y轴
 uds_direct = []; uds_direct = np.load('uds_direct.npy', uds_direct); #uds_direct = np.flip(uds_direct, 1)
-# 从文件中导入uds_direct数组，并反转y轴
-uds_UALP = []; uds_UALP = np.load('uds_UALP.npy', uds_UALP); #uds_direct = np.flip(uds_direct, 1)
 
 # 交互0和1轴的数据
 # uds_adjoint[[0,1],:,:] = uds_adjoint[[1,0],:,:]
@@ -372,11 +303,11 @@ for i in range(len(point_true_value)):
 for i in range(len(point_adjoint_value)):
     print(f"point_{i+1}_adjoint_value = {point_adjoint_value[i]}") 
 
-adjoint_results(651, 322, 1, sensor_list)
-# %%关键参数设定及变量声明 
+adjoint_results(X_true, Y_true, S_true, sensor_list)
+# %%关键参数设定及变量声明   
 diff_sigma_Euler = []
 diff_sigma_Intensity = []
-my_list = [0.95, 1]
+my_list = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1]
 for diff_sigma in my_list:
     
     Euler = []
@@ -385,7 +316,7 @@ for diff_sigma in my_list:
     # 重复100遍
     for i in range (100):
         T = 50000       # MCMC迭代总步数
-        sigma = diff_sigma    # 似然函数的标准差
+        sigma = diff_sigma   # 似然函数的标准差
         
         count = 0       # 用于计算接受率标识
         flag = True     # 用于记录是否接受了新值
@@ -405,16 +336,15 @@ for diff_sigma in my_list:
         trunc_Y = [0, 1000]  # 设置建议分布截断范围
         trunc_S = [0, 5]    # 设置建议分布截断范围
         
-        sigma_X = 20  # 设置建议分布标准差
-        sigma_Y = 20  # 设置建议分布标准差
-        sigma_S = 0.1  # 设置建议分布标准差
+        sigma_X = 80  # 设置建议分布标准差
+        sigma_Y = 80  # 设置建议分布标准差
+        sigma_S = 0.5  # 设置建议分布标准差
         
         iteration = np.zeros(T)
-    
+        
         accepted = []  # 记录接受的采样
         rejected = []  # 记录拒绝的采样
-        accepted_ratio = []
-    
+        
         ################################ 迭代开始 ################################
         for t in tqdm(range(T-1)): 
             t = t + 1
@@ -494,8 +424,6 @@ for diff_sigma in my_list:
         Euler_distance = np.sqrt((max_kde_X - X_true)**2 + (max_kde_Y - Y_true)**2)
         Euler.append(Euler_distance)
         Intensity.append(abs(max_kde_S-S_true))
-        
-        accepted_ratio.append(round((count/T)*100, 4))
         
         print(f"current diff_sigma = {diff_sigma}, current i = {i}\n")
     diff_sigma_Euler.append(np.mean(Euler))
@@ -600,25 +528,25 @@ plt.tick_params(labelsize=18,which='minor',width=2,colors='k')
 plt.tight_layout()
 plt.show()
 
-# % x和y的采样结果同时显示
+# %% x和y的采样结果同时显示
 
 fig = plt.figure(figsize=(10,10))
 
 font = {'family' : 'Times New Roman',
 'weight' : 'normal',
-'size'   : 24,
+'size'   : 18,
 }
 
 ax = fig.add_subplot(1,1,1)
 # ax.plot(accepted[:,0], accepted[:,1], label="Path")
 ax.plot(rejected[-5000:,0], rejected[-5000:,1], 'rx', label='Rejected',alpha=0.5)
 ax.plot(accepted[-5000:,0], accepted[-5000:,1], 'b.', label='Accepted',alpha=0.5)
-ax.patch.set_facecolor('None')
-plt.xlabel("$X$(m)",font,labelpad=(0))
-plt.ylabel("$Y$(m)",font,labelpad=(0))
-x_major_locator=MultipleLocator(200)
+
+plt.xlabel("$X$(m)",font,labelpad=(10))
+plt.ylabel("$Y$(m)",font,labelpad=(10))
+x_major_locator=MultipleLocator(100)
 #把x轴的刻度间隔设置为1，并存在变量里
-y_major_locator=MultipleLocator(200)
+y_major_locator=MultipleLocator(100)
 #把y轴的刻度间隔设置为10，并存在变量里
 ax=plt.gca()
 #ax为两条坐标轴的实例
@@ -643,11 +571,10 @@ plt.ylim(0,1000)
 
 # plt.annotate('$S$', xy=(651,322), weight='heavy', bbox=dict(boxstyle='circle,pad=0.001', fc='yellow', ec='k', lw=1, alpha=1))
 
-plt.tick_params(labelsize=24,which='major',width=2,colors='k')
-plt.tick_params(labelsize=24,which='minor',width=2,colors='k')
-plt.legend(loc=3,frameon=True, framealpha=1, edgecolor = 'k', prop = {"family": "Times New Roman", "size":24})
+plt.tick_params(labelsize=18,which='major',width=2,colors='k')
+plt.tick_params(labelsize=18,which='minor',width=2,colors='k')
+plt.legend(loc=3,frameon=True, framealpha=1, edgecolor = 'k', prop = {"family": "Times New Roman", "size":18})
 plt.tight_layout()
-plt.savefig("transparent_plot.svg", transparent=True)
 # ax.set_title("MCMC sampling for $x$ and $y$ with Metropolis-Hastings. All samples are shown.") 
 
 # %% X采样分布绘图
@@ -676,7 +603,7 @@ plt.tick_params(labelsize=18,which='minor',width=2,colors='k')
 
 x_major_locator=MultipleLocator(100)
 #把x轴的刻度间隔设置为1，并存在变量里
-y_major_locator=MultipleLocator(0.01)
+y_major_locator=MultipleLocator(0.003)
 #把y轴的刻度间隔设置为10，并存在变量里
 ax=plt.gca()
 #ax为两条坐标轴的实例
@@ -691,10 +618,10 @@ ax.spines['left'].set_linewidth(1.5);####设置左边坐标轴的粗细
 ax.spines['right'].set_linewidth(1.5);###设置右边坐标轴的粗细
 ax.spines['top'].set_linewidth(1.5);####设置上部坐标轴的粗细
 ax.xaxis.set_major_formatter('{x:.01f}')
-ax.yaxis.set_major_formatter('{x:.02f}')
+ax.yaxis.set_major_formatter('{x:.03f}')
 
 plt.xlim(0,1000)
-plt.ylim(0,0.05)
+plt.ylim(0,0.015)
 
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
@@ -719,7 +646,7 @@ plt.tick_params(labelsize=18,which='minor',width=2,colors='k')
 
 x_major_locator=MultipleLocator(100)
 #把x轴的刻度间隔设置为1，并存在变量里
-y_major_locator=MultipleLocator(0.01)
+y_major_locator=MultipleLocator(0.003)
 #把y轴的刻度间隔设置为10，并存在变量里
 ax=plt.gca()
 #ax为两条坐标轴的实例
@@ -734,10 +661,10 @@ ax.spines['left'].set_linewidth(1.5);####设置左边坐标轴的粗细
 ax.spines['right'].set_linewidth(1.5);###设置右边坐标轴的粗细
 ax.spines['top'].set_linewidth(1.5);####设置上部坐标轴的粗细
 ax.xaxis.set_major_formatter('{x:.01f}')
-ax.yaxis.set_major_formatter('{x:.02f}')
+ax.yaxis.set_major_formatter('{x:.03f}')
 
 plt.xlim(0,1000)
-plt.ylim(0,0.05)
+plt.ylim(0,0.015)
 
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
@@ -763,7 +690,7 @@ plt.tick_params(labelsize=18,which='minor',width=2,colors='k')
 
 x_major_locator=MultipleLocator(0.5)
 #把x轴的刻度间隔设置为1，并存在变量里
-y_major_locator=MultipleLocator(0.8)
+y_major_locator=MultipleLocator(0.3)
 #把y轴的刻度间隔设置为10，并存在变量里
 ax=plt.gca()
 #ax为两条坐标轴的实例
@@ -781,7 +708,7 @@ ax.xaxis.set_major_formatter('{x:.01f}')
 ax.yaxis.set_major_formatter('{x:.02f}')
 
 plt.xlim(0,5)
-plt.ylim(0,4)
+plt.ylim(0,1.5)
 
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
